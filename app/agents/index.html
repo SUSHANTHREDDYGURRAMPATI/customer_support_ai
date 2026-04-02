@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Support AI</title>
+</head>
+<body>
+    <h2>Chat</h2>
+    <input id="query" placeholder="Type your query">
+    <button onclick="send()">Send</button>
+
+    <pre id="response"></pre>
+
+    <script>
+        async function send() {
+            const query = document.getElementById("query").value;
+
+            const res = await fetch("http://127.0.0.1:8000/handle_query", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    user_id: "user1",
+                    query: query
+                })
+            });
+
+            const data = await res.json();
+            document.getElementById("response").innerText = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>

@@ -5,20 +5,34 @@ from agents.intent_agent import classify_intent
 from agents.retrieval_agent import fetch_user_data
 from agents.response_agent import generate_response
 from agents.decision_agent import decide_action
-from models.schemas import QueryRequest, QueryResponse
+
+from services.logger import log_event   # ✅ ADD THIS
 
 app = FastAPI(title="Agent-Based Customer Support System")
 
 
 @app.post("/handle_query", response_model=QueryResponse)
 def handle_query(request: QueryRequest):
-    # Step 1: Intent Classification
-    intent = classify_intent(request.query)
 
-    # Step 2: Fetch User Data
+    # 🔹 Log incoming query
+    log_event(f"Query: {request.query}")
+
+    # Step 1: Intent
+    intent = classify_intent(request.query)
+    log_event(f"Intent: {intent}")   # ✅ AFTER intent
+
+    # Step 2: Fetch user data
     user_data = fetch_user_data(request.user_id)
 
-    # Step 3: Generate Response
+    if user_data is None:
+        log_event("User not found")   # ✅ IMPORTANT
+        return QueryResponse(
+            intent="unknown_user",
+            response="User not found in our system.",
+            status="escalated"
+        )
+
+    # Step 3: Generate response
     response = generate_response(request.query, intent, user_data)
 
     # Step 4: Decision
@@ -30,6 +44,9 @@ def handle_query(request: QueryRequest):
     else:
         final_response = response
         status = "resolved"
+
+    # 🔹 Final logs
+    log_event(f"Status: {status}")   # ✅ AFTER decision
 
     return QueryResponse(
         intent=intent,
